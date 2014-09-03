@@ -2,6 +2,8 @@ require 'uri'
 require 'net/https'
 require 'json'
 
+#this comment exists only to test travis ci
+
 module BitPay
   # This class is used to instantiate a BitPay Client object. It is expected to be thread safe.
   #
