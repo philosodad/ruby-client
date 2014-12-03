@@ -65,15 +65,6 @@ describe BitPay::Client do
       expect { bitpay_client.pair_pos_client(claim_code) }.to raise_error(BitPay::BitPayError, '403: this is a 403 error')
     end
 
-    it 'saves the returned token' do
-      bitpay_client
-      json_tokens = JSON.generate(tokens)
-      stub_request(:any, /#{BitPay::TEST_API_URI}.*/).to_return(status: 200, body: json_tokens)
-      file = class_double("File").as_stubbed_const
-      expect(file).to receive(:open).with(BitPay::TOKEN_FILE_PATH, 'w')
-      bitpay_client.pair_pos_client(claim_code)
-    end
-
     it 'short circuits on invalid pairing codes' do
       100.times do
         claim_code = an_illegal_claim_code
@@ -87,16 +78,47 @@ describe BitPay::Client do
     before {stub_const('ENV', {'BITPAY_PEM' => PEM})}
     it { is_expected.to respond_to(:create_invoice) }
 
-    it 'should make call to the server to create an invoice' do
-      stub_request(:post, /#{BitPay::TEST_API_URI}\/invoices.*/).to_return(:body => '{"data": "awesome"}')
-      bitpay_client.create_invoice(id: "addd", price: 20, currency: "USD")
-      assert_requested :post, "#{BitPay::TEST_API_URI}/invoices"
+    describe "should make the call to the server to create an invoice" do
+      it 'allows numeric input for the price' do
+        stub_request(:post, /#{BitPay::TEST_API_URI}\/invoices.*/).to_return(:body => '{"data": "awesome"}')
+        bitpay_client.create_invoice(price: 20.00, currency: "USD")
+        assert_requested :post, "#{BitPay::TEST_API_URI}/invoices"
+      end
+
+      it 'allows string input for the price' do
+        stub_request(:post, /#{BitPay::TEST_API_URI}\/invoices.*/).to_return(:body => '{"data": "awesome"}')
+        bitpay_client.create_invoice(price: "20.00", currency: "USD")
+        assert_requested :post, "#{BitPay::TEST_API_URI}/invoices"
+      end
     end
 
     it 'should pass through the API error message from load_tokens' do
       stub_request(:get, /#{BitPay::TEST_API_URI}\/tokens.*/).to_return(status: 500, body: '{"error": "load_tokens_error"}')
-      expect { bitpay_client.create_invoice(id: "addd", price: 20, currency: "USD") }.to raise_error(BitPay::BitPayError, '500: load_tokens_error')         
+      expect { bitpay_client.create_invoice(price: 20, currency: "USD") }.to raise_error(BitPay::BitPayError, '500: load_tokens_error')         
     end
+
+    it 'verifies the validity of the price argument' do
+      expect { bitpay_client.create_invoice(price: "3,999", currency: "USD") }.to raise_error(BitPay::ArgumentError, 'Illegal Argument: Price must be formatted as a float')
+    end
+    
+    it 'verifies the validity of the currency argument' do
+      expect { bitpay_client.create_invoice(price: "3999", currency: "UASD") }.to raise_error(BitPay::ArgumentError, 'Illegal Argument: Currency is invalid.')
+    end
+  end
+
+  describe '#set_token' do
+    subject { bitpay_client }
+    before {stub_const('ENV', {'BITPAY_PEM' => PEM})}
+    it { is_expected.to respond_to(:set_token) }
+    it 'sets a token in the client' do
+
+    end
+  end
+
+  describe "#verify_token" do
+    subject { bitpay_client }
+    before {stub_const('ENV', {'BITPAY_PEM' => PEM})}
+    it { is_expected.to respond_to(:verify_token) }
   end
 end
 

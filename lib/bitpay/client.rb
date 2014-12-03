@@ -19,7 +19,7 @@ module BitPay
     #  # Create a client with a pem file created by the bitpay client:
     #  client = BitPay::Client.new
     def initialize(opts={})
-      @pem               = opts[:pem] || ENV['BITPAY_PEM'] || KeyUtils.retrieve_or_generate_pem 
+      @pem               = opts[:pem] || ENV['BITPAY_PEM'] || KeyUtils.generate_pem 
       @key               = KeyUtils.create_key @pem
       @priv_key          = KeyUtils.get_private_key @key
       @pub_key           = KeyUtils.get_public_key @key
@@ -29,7 +29,7 @@ module BitPay
       @https             = Net::HTTP.new @uri.host, @uri.port
       @https.use_ssl     = true
       @https.ca_file     = CA_FILE
-      @tokens            = {}
+      @tokens            = opts[:tokens] || {}
 
       # Option to disable certificate validation in extraordinary circumstance.  NOT recommended for production use
       @https.verify_mode = opts[:insecure] == true ? OpenSSL::SSL::VERIFY_NONE : OpenSSL::SSL::VERIFY_PEER
@@ -43,11 +43,14 @@ module BitPay
       raise BitPay::ArgumentError, "pairing code is not legal" unless verify_claim_code(claimCode)
       response = set_pos_token(claimCode)
       get_token 'pos'
-      write_token_file(response["data"][0])
+      token = response["data"][0]
+      @tokens.merge({token['facade'] => token['token']})
       response
     end
 
-    def create_invoice(id:, price:, currency:, facade: 'pos', params:{})
+    def create_invoice(price:, currency:, facade: 'pos', params:{})
+      raise BitPay::ArgumentError, "Illegal Argument: Price must be formatted as a float" unless ( price.is_a?(Numeric) || /^[[:digit:]]+(\.[[:digit:]]{2})?$/.match(price) )
+      raise BitPay::ArgumentError, "Illegal Argument: Currency is invalid." unless /^[[:upper:]]{3}$/.match(currency)
       params.merge!({price: price, currency: currency})
       response = send_request("POST", "invoices", facade: facade, params: params)
       response["data"]
@@ -59,7 +62,16 @@ module BitPay
       response["data"]
     end
     
+    def set_token
+    end
+
+    def verify_token
+      server_tokens = load_tokens
+      @tokens.each{|key, value| return false if server_tokens[key] != value}
+      return true
+    end
     ## Generates REST request to api endpoint
+
     def send_request(verb, path, facade: 'merchant', params: {}, token: nil)
       token ||= get_token(facade)
 
@@ -161,10 +173,6 @@ module BitPay
 
     def get_token(facade)
       token = @tokens[facade] || load_tokens[facade] || raise(BitPayError, "Not authorized for facade: #{facade}")
-    end
-
-    def write_token_file(token)
-      File.open(BitPay::TOKEN_FILE_PATH, 'w') { |file| file.write(JSON.generate(token)) }
     end
 
     def verify_claim_code(claim_code)
