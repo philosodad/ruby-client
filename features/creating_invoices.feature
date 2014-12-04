@@ -26,7 +26,7 @@ Feature: creating an invoice
   Scenario: The invoice amount exceeds the tier level
     Given there is a valid token and keyfile
     When the user tries to create an invoice which exceeds their tier
-    Then they will receive a BitPay Error "error message"
+    Then they will receive a BitPay Error matching "500: Invoice not created due to account limits, please check your approval levels"
 
   ### these errrors are quite generic, do we want to capture these bad values before making a request
   Scenario: The currency code is invalid
