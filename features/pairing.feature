@@ -16,20 +16,25 @@ Feature: pairing with bitpay
     Then the client will pair successfully
     And tokens will be saved locally
 
-  Scenario: the client has no pairing code
+  Scenario: the client has a bad pairing code
     Given that there is a local keyfile
     When the user pairs with BitPay with a bad pairing code
-    Then they will recieve an error "400: BitPay's error message" 
+    Then they will recieve a BitPay Error matching "400: Unable to create token" 
+
+  Scenario: the client has no pairing code
+    Given that there is a local keyfile
+    When the user pairs with BitPay with no pairing code
+    Then they will recieve an Argument Error matching "wrong number of arguments" 
 
   Scenario: the client has bad keys
     Given that there is a bad local keyfile
     When the user pairs with BitPay with a valid pairing code
-    Then they will recieve an error "400: BitPay's error message" 
+    Then they will recieve a BitPay Error matching "400: Unable to create token" 
 
   Scenario: the client has an API key
     Given that the client has a local keyfile
     When the user pairs with bitpay using an API key
-    Then they will recieve an error "BitPay Error: Use a pairing code"
+    Then they will recieve a BitPay Error matching "use a pairing code"
 
   Scenario: the client has a bad port configuration to a closed port
     Given that there is a local keyfile
