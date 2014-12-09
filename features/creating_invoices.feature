@@ -3,6 +3,9 @@ Feature: creating an invoice
   If they can't
   Create Invoices
 
+  Background:
+    Given the user pairs with BitPay
+
   Scenario: The request is correct
     Given there is a valid token and keyfile
     When the user tries to create an invoice with price and currency

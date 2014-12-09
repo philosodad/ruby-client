@@ -29,7 +29,7 @@ end
 def get_claim_code_from_server
   Capybara::visit ROOT_ADDRESS
   if logged_in
-    Capybara::click_link('Dashboard')
+    Capybara::visit "#{ROOT_ADDRESS}/home"
   else
     log_in
   end

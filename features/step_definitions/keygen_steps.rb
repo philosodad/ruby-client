@@ -23,7 +23,7 @@ When(/^tokens will be saved locally$/) do
   File.open(BitPay::TOKEN_FILE_PATH, 'r').read == JSON.generate(@token['data'][0])
 end
 
-When(/^the user pairs with BitPay with a valid pairing code$/) do
+When(/^the user pairs with BitPay(?: with a valid pairing code|)$/) do
   claim_code = get_claim_code_from_server
   pem = BitPay::KeyUtils.generate_pem
   client = BitPay::Client.new(api_uri: ROOT_ADDRESS, pem: pem, insecure: true)
