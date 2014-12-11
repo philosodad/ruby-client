@@ -98,5 +98,11 @@ describe BitPay::Client do
       expect { bitpay_client.create_invoice(id: "addd", price: 20, currency: "USD") }.to raise_error(BitPay::BitPayError, '500: load_tokens_error')         
     end
   end
+
+  describe "#verify_token" do
+    subject { bitpay_client }
+    before {stub_const('ENV', {'BITPAY_PEM' => PEM})}
+    it { is_expected.to respond_to(:verify_token) }
+  end
 end
 

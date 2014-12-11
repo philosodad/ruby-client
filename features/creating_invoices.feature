@@ -4,17 +4,26 @@ Feature: creating an invoice
   Create Invoices
 
   Background:
-    Given the user pairs with BitPay
+    Given the user is paired with BitPay
 
-  Scenario: The request is correct
-    Given there is a valid token and keyfile
-    When the user tries to create an invoice with price and currency
-    Then they should recieve an invoice in response with price and currency and status
+  Scenario Outline: The request is correct
+    When the user creates an invoice for <price> <currency>
+    Then they should recieve an invoice in response for <price> <currency>
+  Examples:
+    | price    | currency |
+    | "500.23" | "USD"    |
+    | "300.21" | "EUR"    |
 
-  Scenario: The invoice is incomplete
-    Given there is a valid token and keyfile
-    When the user tries to create an invoice without (price or currency)
-    Then they will receive an Argument Error matching "missing keyword: "
+  Scenario Outline: The invoice contains illegal characters
+    When the user creates an invoice for <price> <currency>
+    Then they should receive a BitPay::ArgumentError matching "Illegal Argument"
+  Examples:
+    | price    | currency  |
+    | "500,23" | "USD"     |
+    | "300.21" | "EaUR"    |
+    | ""       | "USD"     |
+    | "Ten"    | "USD"     |
+    | "100"    | ""        |
 
   Scenario: The token is invalid
     Given there is an invalid token

@@ -1,5 +1,3 @@
-require_relative 'step_helpers'
-
 @token = nil
 @error = nil
 
@@ -44,6 +42,10 @@ When(/^the fails to pair with BitPay because of an incorrect port$/) do
   end
 end
 
+Given(/^the user is paired with BitPay$/) do
+    pending # express the regexp above with the code you wish you had
+end
+
 Given(/^the user has a bad pairing_code "(.*?)"$/) do |arg1|
     # This is a no-op, pairing codes are transient and never actually saved
 end
@@ -60,7 +62,7 @@ Then(/^the user fails to pair with a semantically (?:in|)valid code "(.*?)"$/) d
   end
 end
 
-Then(/^they will recieve a (.*?) matching "(.*?)"$/) do |error_class, error_message|
+Then(/^they will receive an? (.*?) matching "(.*?)"$/) do |error_class, error_message|
   raise "Error: #{@error.class}, message: #{@error.message}" unless Object.const_get(error_class) == @error.class && @error.message.include?(error_message)
 end
 

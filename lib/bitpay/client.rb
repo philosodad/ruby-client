@@ -59,7 +59,15 @@ module BitPay
       response["data"]
     end
     
+    def verify_token
+      server_tokens = load_tokens
+      local_token = JSON.parse(File.read(TOKEN_FILE_PATH))
+      local_token = {local_token['facade'] => local_token['token']}
+      local_token.each{|key, value| return false if server_tokens[key] != value}
+      return true
+    end
     ## Generates REST request to api endpoint
+
     def send_request(verb, path, facade: 'merchant', params: {}, token: nil)
       token ||= get_token(facade)
 

@@ -19,14 +19,14 @@ Feature: pairing with bitpay
 
   Scenario: the client has a bad pairing code
     Given the user fails to pair with a semantically valid code "a1b2c3d" 
-    Then they will recieve a BitPay::BitPayError matching "500: Unable to create token" 
+    Then they will receive a BitPay::BitPayError matching "500: Unable to create token" 
 
   Scenario: the client has an incorrect pairing code
     Given the user fails to pair with a semantically invalid code "a2b2c3d4"
-    Then they will recieve a BitPay::ArgumentError matching "pairing code is not legal" 
+    Then they will receive a BitPay::ArgumentError matching "pairing code is not legal" 
 
   Scenario: the client has a bad port configuration to a closed port
     Given that there is a local keyfile
     When the fails to pair with BitPay because of an incorrect port
-    Then they will recieve a BitPay::ConnectionError matching "Connection refused" 
+    Then they will receive a BitPay::ConnectionError matching "Connection refused" 
 
