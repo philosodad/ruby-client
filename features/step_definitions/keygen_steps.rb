@@ -1,32 +1,11 @@
 @token = nil
 @error = nil
 
-Given(/^that there is a local keyfile$/) do
-  File.file?(BitPay::PRIVATE_KEY_PATH) ? true : create_key_file
-end
-
-Given(/^that there is no local keyfile$/) do
-  File.file?(BitPay::PRIVATE_KEY_PATH) ? delete_key_file : true
-end
-
-When(/^the keyfile will be saved locally$/) do
-  File.file?(BitPay::PRIVATE_KEY_PATH)
-end
-
-Given(/^that there is no token saved locally$/) do
-  File.file?(BitPay::TOKEN_FILE_PATH) ? File.delete(BitPay::TOKEN_FILE_PATH) : true
-end
-
-When(/^tokens will be saved locally$/) do
-  File.open(BitPay::TOKEN_FILE_PATH, 'r').read == JSON.generate(@token['data'][0])
-end
-
 When(/^the user pairs with BitPay(?: with a valid pairing code|)$/) do
   claim_code = get_claim_code_from_server
   pem = BitPay::KeyUtils.generate_pem
-  client = BitPay::Client.new(api_uri: ROOT_ADDRESS, pem: pem, insecure: true)
-  @token = client.pair_pos_client(claim_code)
-  @token['data'][0]['token'].length > 0
+  @client = BitPay::Client.new(api_uri: ROOT_ADDRESS, pem: pem, insecure: true)
+  @token = @client.pair_pos_client(claim_code)
 end
 
 When(/^the fails to pair with BitPay because of an incorrect port$/) do
@@ -42,8 +21,12 @@ When(/^the fails to pair with BitPay because of an incorrect port$/) do
   end
 end
 
+Given(/^the user is authenticated with BitPay$/) do
+  @client = new_client_from_stored_values
+end
+
 Given(/^the user is paired with BitPay$/) do
-    pending # express the regexp above with the code you wish you had
+  raise "Client is not paired" unless @client.verify_token
 end
 
 Given(/^the user has a bad pairing_code "(.*?)"$/) do |arg1|

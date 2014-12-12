@@ -61,30 +61,3 @@ command :show_keys do |c|
     
   end
 end
-
-command :verify do |c|
-  c.syntax = "bitpay verify [options]"
-  c.summary = "Verify existing tokens are correct."
-  c.option '--test', "Use the bitpay test server"
-  c.option '--custom <custom>', "Use a custom bitpay URI"
-  c.option '--insecure <insecure>', "Use an insecure custom bitpay URI"
-  c.action do |args, options|
-    case
-    when options.test
-      client = BitPay::Client.new(api_uri: "https://test.bitpay.com")
-    when options.custom
-      client = BitPay::Client.new(api_uri: options.custom)
-    when options.insecure
-      client = BitPay::Client.new(insecure: true, api_uri: options.insecure)
-    else
-      client = BitPay::Client.new
-    end
-  end
-
-  begin
-    message = client.verify
-  rescue Exception => e
-    message = e.message
-  end
-  puts message
-end

@@ -10,21 +10,11 @@ require_relative '../../config/capybara.rb'
 #
 ## Test Variables
 #
-PEM = "-----BEGIN EC PRIVATE KEY-----\nMHQCAQEEICg7E4NN53YkaWuAwpoqjfAofjzKI7Jq1f532dX+0O6QoAcGBSuBBAAK\noUQDQgAEjZcNa6Kdz6GQwXcUD9iJ+t1tJZCx7hpqBuJV2/IrQBfue8jh8H7Q/4vX\nfAArmNMaGotTpjdnymWlMfszzXJhlw==\n-----END EC PRIVATE KEY-----\n"
+#PEM = "-----BEGIN EC PRIVATE KEY-----\nMHQCAQEEICg7E4NN53YkaWuAwpoqjfAofjzKI7Jq1f532dX+0O6QoAcGBSuBBAAK\noUQDQgAEjZcNa6Kdz6GQwXcUD9iJ+t1tJZCx7hpqBuJV2/IrQBfue8jh8H7Q/4vX\nfAArmNMaGotTpjdnymWlMfszzXJhlw==\n-----END EC PRIVATE KEY-----\n"
+#
+#PUB_KEY = '038d970d6ba29dcfa190c177140fd889fadd6d2590b1ee1a6a06e255dbf22b4017'
+#CLIENT_ID = "TeyN4LPrXiG5t2yuSamKqP3ynVk3F52iHrX"
 
-PUB_KEY = '038d970d6ba29dcfa190c177140fd889fadd6d2590b1ee1a6a06e255dbf22b4017'
-CLIENT_ID = "TeyN4LPrXiG5t2yuSamKqP3ynVk3F52iHrX"
-
-
-def create_key_file
-  BitPay::KeyUtils.generate_pem
-  true
-end
-
-def delete_key_file
-  File.delete(BitPay::PRIVATE_KEY_PATH)
-  true
-end
 
 def get_claim_code_from_server
   Capybara::visit ROOT_ADDRESS
@@ -46,6 +36,35 @@ def log_in
   Capybara::fill_in 'email', :with => TEST_USER
   Capybara::fill_in 'password', :with => TEST_PASS
   Capybara::click_button('loginButton')
+end
+
+def new_paired_client
+  claim_code = get_claim_code_from_server
+  pem = BitPay::KeyUtils.generate_pem
+  client = BitPay::Client.new(api_uri: ROOT_ADDRESS, pem: pem, insecure: true)
+  client.pair_pos_client(claim_code)
+  client
+end
+
+def new_client_from_stored_values
+  if File.file?(BitPay::PRIVATE_KEY_PATH) && File.file?(BitPay::TOKEN_FILE_PATH)
+    token = get_token_from_file
+    pem = File.read(BitPay::PRIVATE_KEY_PATH)
+    BitPay::Client.new(pem: pem, token: token, insecure: true, api_uri: ROOT_ADDRESS )
+  else
+    claim_code = get_claim_code_from_server
+    pem = BitPay::KeyUtils.generate_pem
+    client = BitPay::Client.new(api_uri: ROOT_ADDRESS, pem: pem, insecure: true)
+    token = client.pair_pos_client(claim_code)
+    File.write(BitPay::PRIVATE_KEY_PATH, pem)
+    File.write(BitPay::TOKEN_FILE_PATH, JSON.generate(token))
+    client
+  end   
+end
+
+def get_token_from_file
+  token = JSON.parse(File.read(BitPay::TOKEN_FILE_PATH))
+  {token['facade'] => token['token']}
 end
 
 def logged_in
