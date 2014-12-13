@@ -63,7 +63,7 @@ def new_client_from_stored_values
 end
 
 def get_token_from_file
-  token = JSON.parse(File.read(BitPay::TOKEN_FILE_PATH))
+  token = JSON.parse(File.read(BitPay::TOKEN_FILE_PATH))['data'][0]
   {token['facade'] => token['token']}
 end
 
