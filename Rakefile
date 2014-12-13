@@ -3,13 +3,18 @@ require 'rspec/core/rake_task'
 require 'capybara'
 require 'capybara/poltergeist'
 require 'mongo'
-
+require 'cucumber'
+require 'cucumber/rake/task'
 require_relative 'config/constants.rb'
 require_relative 'config/capybara.rb'
 
 RSpec::Core::RakeTask.new(:spec)
 
 task :default => :spec
+
+Cucumber::Rake::Task.new(:features) do |t|
+    t.cucumber_opts = "features --format pretty"
+end
 
 desc "Bitpay Tasks"
 namespace :bitpay do
@@ -36,7 +41,6 @@ namespace :bitpay do
   end
 
   desc "Clear rate limiters from local mongo host"
-
   task :clear_rate_limiters do
     puts "clearing rate limiters"
     client = Mongo::MongoClient.new
@@ -46,7 +50,19 @@ namespace :bitpay do
     puts "rate limiters cleared"
   end
 
+  desc "Clear local pem and token file"
+  task :clear_local_files do
+    puts "clearing local files"
+    HOME_DIR = File.join(Dir.home, '.bitpay')
+    KEY_FILE = File.join(HOME_DIR, 'bitpay.pem')
+    TOKEN_FILE = File.join(HOME_DIR, 'tokens.json')
+    File.delete(KEY_FILE) if File.file?(KEY_FILE)
+    File.delete(TOKEN_FILE) if File.file?(TOKEN_FILE)
+    puts "local files cleared"
+  end
+
   desc "Run specs and clear claim codes and rate_limiters."
   task :spec_clear => ['spec', 'clear_claim_codes', 'clear_rate_limiters']
+  task :tests_clear => ['spec', 'clear_rate_limiters', 'features', 'clear_local_files', 'clear_claim_codes', 'clear_rate_limiters']
 
 end
