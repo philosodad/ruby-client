@@ -1,10 +1,8 @@
-require 'capybara/poltergeist'
 require 'pry'
 require 'fileutils' 
 
 require File.join File.dirname(__FILE__), '..', '..', 'lib', 'bitpay_sdk.rb'
 require_relative '../../config/constants.rb'
-require_relative '../../config/capybara.rb'
 
 
 module BitPay
